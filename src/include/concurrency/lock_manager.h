@@ -17,7 +17,7 @@
 #include "concurrency/transaction.h"
 
 namespace cmudb {
-    enum class LockMode {
+    enum class LockMode_DEPRECATE {
         SHARED = 0, UPGRADING, EXCLUSIVE
     };
 
@@ -25,7 +25,7 @@ namespace cmudb {
 
         //Request(Request &) = delete;
 
-        Request(txn_id_t tid, LockMode mode, bool granted) : tid_(tid),
+        Request(txn_id_t tid, LockMode_DEPRECATE mode, bool granted) : tid_(tid),
                                                              mode_(mode), is_granted_(granted) { ; }
 
         void wait() {
@@ -40,7 +40,7 @@ namespace cmudb {
         }
 
         txn_id_t tid_;
-        LockMode mode_;
+        LockMode_DEPRECATE mode_;
         bool is_granted_;
         std::condition_variable cv_;
         std::mutex cv_m;
@@ -51,7 +51,7 @@ namespace cmudb {
 
         //RequestQueue(RequestQueue &) = delete;
 
-        bool canGranted(LockMode lockMode) {
+        bool canGranted(LockMode_DEPRECATE lockMode) {
             /*
             if ( req_queue_.empty() )
                 return true;
@@ -64,12 +64,12 @@ namespace cmudb {
                 return true;
             Request &request = req_queue_.back();
             if( request.is_granted_ ){
-                return request.mode_ == LockMode::SHARED && lockMode == LockMode::SHARED;
+                return request.mode_ == LockMode_DEPRECATE::SHARED && lockMode == LockMode_DEPRECATE::SHARED;
             }
             return false;
         }
 
-        void insert_into_queue(Transaction *txn, const RID &rid, LockMode lockMode, bool granted,
+        void insert_into_queue(Transaction *txn, const RID &rid, LockMode_DEPRECATE lockMode, bool granted,
                                std::unique_lock<std::mutex> *lock) {
 
             req_queue_.emplace_back(txn->GetTransactionId(), lockMode, granted );
@@ -78,7 +78,7 @@ namespace cmudb {
                 lock->unlock();
                 request.wait();
             }
-            if (lockMode == LockMode::SHARED)
+            if (lockMode == LockMode_DEPRECATE::SHARED)
                 txn->GetSharedLockSet()->insert(rid);
             else
                 txn->GetExclusiveLockSet()->insert(rid);
@@ -109,7 +109,7 @@ namespace cmudb {
 
         bool LockUpgrade(Transaction *txn, const RID &rid);
 
-        bool LockTemplate(Transaction *txn, const RID &rid, LockMode lockMode);
+        bool LockTemplate(Transaction *txn, const RID &rid, LockMode_DEPRECATE lockMode);
 
         // unlock:
         // release the lock hold by the txn

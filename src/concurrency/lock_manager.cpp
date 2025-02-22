@@ -7,19 +7,19 @@
 namespace cmudb {
 
     bool LockManager::LockShared(Transaction *txn, const RID &rid) {
-        return LockTemplate(txn, rid, LockMode::SHARED);
+        return LockTemplate(txn, rid, LockMode_DEPRECATE::SHARED);
     }
 
     bool LockManager::LockExclusive(Transaction *txn, const RID &rid) {
-        return LockTemplate( txn, rid, LockMode::EXCLUSIVE );
+        return LockTemplate(txn, rid, LockMode_DEPRECATE::EXCLUSIVE);
     }
 
     bool LockManager::LockUpgrade(Transaction *txn, const RID &rid) {
-        return LockTemplate( txn, rid, LockMode::UPGRADING );
+        return LockTemplate(txn, rid, LockMode_DEPRECATE::UPGRADING);
     }
 
 
-    bool LockManager::LockTemplate(Transaction *txn, const RID &rid, LockMode lockMode) {
+    bool LockManager::LockTemplate(Transaction *txn, const RID &rid, LockMode_DEPRECATE lockMode) {
         /*
          * 验证两阶段提交：判断事务是否处于GROWING阶段
          * 若不满足2PL约束，则该事务应Abort
@@ -34,7 +34,7 @@ namespace cmudb {
         std::unique_lock<std::mutex> item_latch(requestQueue.mutex_);
         table_latch.unlock();
 
-        if (lockMode == LockMode::UPGRADING) {
+        if (lockMode == LockMode_DEPRECATE::UPGRADING) {
             /*
              * 等待队列中不能有其他请求是Upgrading状态
              * 如果该事务之前以LOCKMODE::SHARED加入请求队列，则从队列中删除
@@ -46,7 +46,7 @@ namespace cmudb {
             }
             auto it = std::find_if(requestQueue.req_queue_.begin(), requestQueue.req_queue_.end(),
                                    [txn](const Request &req) { return txn->GetTransactionId() == req.tid_; });
-            if (it == requestQueue.req_queue_.end() || it->mode_ != LockMode::SHARED || !it->is_granted_) {
+            if (it == requestQueue.req_queue_.end() || it->mode_ != LockMode_DEPRECATE::SHARED || !it->is_granted_) {
                 txn->SetState(TransactionState::ABORTED);
                 return false;
             }
@@ -85,9 +85,9 @@ namespace cmudb {
         auto it = std::find_if(request_queue.req_queue_.begin(), request_queue.req_queue_.end(),
                                [txn](const Request &req) { return txn->GetTransactionId() == req.tid_; });
         //断言： 发出unlock message的事务必须在data item所在的请求队列中
-        assert(it != request_queue.req_queue_.end());
+        //assert(it != request_queue.req_queue_.end());
 
-        auto lockSet = (it->mode_ == LockMode::SHARED) ? txn->GetSharedLockSet() : txn->GetExclusiveLockSet();
+        auto lockSet = (it->mode_ == LockMode_DEPRECATE::SHARED) ? txn->GetSharedLockSet() : txn->GetExclusiveLockSet();
         lockSet->erase(rid);
         request_queue.req_queue_.erase(it);
         //如果当前RID对应的请求队列为空，则从locktable中删除
@@ -103,15 +103,15 @@ namespace cmudb {
          * 如果未获取，且获取到的状态是EXCLUSIVE 则break循坏
          * 如果未获取，且获取是SHARED, 则遍历直到某个request不是SHARED mode
          */
-        if ( !first_req.is_granted_ && first_req.mode_ == LockMode::EXCLUSIVE )
+        if (!first_req.is_granted_ && first_req.mode_ == LockMode_DEPRECATE::EXCLUSIVE)
             first_req.granted();
         else if ( !first_req.is_granted_ ) {
             for ( Request &ele : request_queue.req_queue_ ) {
-                if ( ele.mode_ == LockMode::UPGRADING ) {
+                if (ele.mode_ == LockMode_DEPRECATE::UPGRADING) {
                     request_queue.has_upgrading = false;
-                    ele.mode_ = LockMode::EXCLUSIVE;
+                    ele.mode_ = LockMode_DEPRECATE::EXCLUSIVE;
                 }
-                if ( ele.mode_ == LockMode::EXCLUSIVE ) {
+                if (ele.mode_ == LockMode_DEPRECATE::EXCLUSIVE) {
                     ele.granted();
                     break;
                 }

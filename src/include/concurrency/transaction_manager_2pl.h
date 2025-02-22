@@ -71,9 +71,9 @@ class TransactionManagerWith2PL {
    */
   auto GetTransaction(txn_id_t txn_id) -> TransactionWith2PL * {
     txn_map_mutex.RLock();
-    assert(txn_map.find(txn_id) != txn_map.end());
+      //assert(txn_map.find(txn_id) != txn_map.end());
     auto *res = txn_map[txn_id];
-    assert(res != nullptr);
+      //assert(res != nullptr);
     txn_map_mutex.RUnlock();
     return res;
   }

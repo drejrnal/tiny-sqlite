@@ -19,10 +19,7 @@ namespace cmudb {
             //buffer pool force flush时，启动该线程
             while ( ENABLE_LOGGING.load() ) {
                 std::unique_lock<std::mutex> cvlock(latch_);
-                bool time_out = cv_.wait_for(cvlock, LOG_TIMEOUT, [&] {
-                    return needFlush_;
-                });
-                LOG_DEBUG("Begin to flush log buffer TIME_OUT[%d] Write position %d", time_out, (int)writePosition);
+                LOG_DEBUG("Begin to flush log buffer TIME_OUT Write position %d", (int) writePosition);
                 //如果超时，则将log buffer的内容持久到盘中。
                 if (writePosition > 0) {
                     std::swap(log_buffer_, flush_buffer_);

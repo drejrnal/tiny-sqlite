@@ -23,7 +23,7 @@ namespace cmudb {
         table_oid_t oid{static_cast<uint32_t>(0)};
         TransactionWith2PL *txn = txn_mgr.Begin();
         //lock table
-        lock_mgr.LockTable(txn, LockManagerV2::LockMode::SHARED, oid);
+        lock_mgr.LockTable(txn, LockMode::SHARED, oid);
         CheckGrowing(txn);
         //unlock table
         lock_mgr.UnlockTable(txn, oid);
@@ -45,7 +45,7 @@ namespace cmudb {
         bool lock_res;
         auto task = [&](){
             bool res;
-            res = lock_mgr.LockTable(txn2, LockManagerV2::LockMode::EXCLUSIVE, oid);
+            res = lock_mgr.LockTable(txn2, LockMode::EXCLUSIVE, oid);
             EXPECT_TRUE(res);
             CheckGrowing(txn2);
             //sleep for 300 ms
@@ -56,7 +56,7 @@ namespace cmudb {
             CheckCommitted(txn2);
         };
         std::thread t(task);
-        lock_res = lock_mgr.LockTable(txn1, LockManagerV2::LockMode::SHARED, oid);
+        lock_res = lock_mgr.LockTable(txn1, LockMode::SHARED, oid);
         EXPECT_TRUE(lock_res);
         CheckGrowing(txn1);
         //sleep for 100 ms
@@ -86,7 +86,7 @@ namespace cmudb {
             bool res;
             //transaction 0 do something before hold lock
             std::this_thread::sleep_for(std::chrono::milliseconds(300));
-            res = lock_mgr.LockTable(txn1, LockManagerV2::LockMode::SHARED, oid);
+            res = lock_mgr.LockTable(txn1, LockMode::SHARED, oid);
             EXPECT_TRUE(res);
             CheckGrowing(txn1);
             lock_mgr.UnlockTable(txn1, oid);
@@ -95,12 +95,12 @@ namespace cmudb {
             CheckCommitted(txn1);
         };
         std::thread t(task);
-        lock_res = lock_mgr.LockTable(txn2, LockManagerV2::LockMode::INTENTION_EXCLUSIVE, oid);
+        lock_res = lock_mgr.LockTable(txn2, LockMode::INTENTION_EXCLUSIVE, oid);
         EXPECT_TRUE(lock_res);
         CheckGrowing(txn2);
         //sleep for 100 ms
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        lock_res = lock_mgr.LockTable(txn2, LockManagerV2::LockMode::EXCLUSIVE, oid);
+        lock_res = lock_mgr.LockTable(txn2, LockMode::EXCLUSIVE, oid);
         EXPECT_TRUE(lock_res);
         CheckGrowing(txn2);
         //sleep for 300 ms

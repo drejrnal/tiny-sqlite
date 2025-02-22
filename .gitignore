@@ -2,6 +2,7 @@
 *.d
 .DS_STORE
 cmake-build-debug/
+build/
 src/.DS_Store
 src/include/.DS_STORE
 
